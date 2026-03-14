@@ -84,17 +84,19 @@ export const userApi = {
     }),
 
   // Login
-  login: async (username, password) => {
+ login: async (username, password) => {
 
-    const token = makeBasicToken(username, password)
+  const response = await api.post("/users/login", {
+    username,
+    password
+  })
 
-    // save token
-    localStorage.setItem("authToken", token)
+  const token = response.data.token
 
-    const response = await api.get("/ideas?page=0&size=1")
+  localStorage.setItem("authToken", "Basic " + token)
 
-    return response.data
-  },
+  return response.data
+},
 
   // Admin APIs
   getAll: () =>
