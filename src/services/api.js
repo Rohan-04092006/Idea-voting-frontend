@@ -10,13 +10,13 @@ const api = axios.create({
   },
 })
 
-// Attach Basic Auth token automatically
+// Attach Basic Auth automatically
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("authToken")
 
     if (token) {
-      config.headers.Authorization = `Basic ${token}`
+      config.headers.Authorization = token
     }
 
     return config
@@ -24,12 +24,13 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Auth helper
+// Create Basic token
 export const makeBasicToken = (username, password) =>
-  btoa(`${username}:${password}`)
+  "Basic " + btoa(`${username}:${password}`)
 
 // ─── Ideas API ─────────────────────────────
 export const ideaApi = {
+
   getAll: (page = 0, size = 10, sort = "createdAt") =>
     api.get(`/ideas?page=${page}&size=${size}&sort=${sort}`),
 
@@ -57,6 +58,7 @@ export const ideaApi = {
 
 // ─── Votes API ─────────────────────────────
 export const voteApi = {
+
   upvote: (ideaId) =>
     api.post(`/votes/ideas/${ideaId}/upvote`),
 
@@ -73,24 +75,23 @@ export const voteApi = {
 // ─── Users API ─────────────────────────────
 export const userApi = {
 
-  // Register user
+  // Register
   register: (username, email, password) =>
-  api.post("/users/register", {
-    username,
-    email,
-    password
-  }),
+    api.post("/users/register", {
+      username,
+      email,
+      password
+    }),
 
-  // Login using Basic Authentication
+  // Login
   login: async (username, password) => {
 
     const token = makeBasicToken(username, password)
 
-    const response = await axios.get(`${BASE_URL}/ideas?page=0&size=1`, {
-      headers: {
-        Authorization: `Basic ${token}`,
-      },
-    })
+    // save token
+    localStorage.setItem("authToken", token)
+
+    const response = await api.get("/ideas?page=0&size=1")
 
     return response.data
   },
