@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ideaApi } from "../api/api"   // adjust path if needed
+import { ideaApi } from "../api"   // adjust path if needed
 import toast from "react-hot-toast"
 
 export default function AddIdea() {
