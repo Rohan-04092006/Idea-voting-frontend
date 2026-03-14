@@ -74,8 +74,12 @@ export const voteApi = {
 export const userApi = {
 
   // Register user
-  register: (data) =>
-    api.post("/users/register", data),
+  register: (username, email, password) =>
+  api.post("/users/register", {
+    username,
+    email,
+    password
+  }),
 
   // Login using Basic Authentication
   login: async (username, password) => {
