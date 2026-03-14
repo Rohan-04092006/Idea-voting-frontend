@@ -1,107 +1,101 @@
-import axios from "axios"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { ideaApi } from "../api/api"   // adjust path if needed
+import toast from "react-hot-toast"
 
-const BASE_URL = "https://idea-voting-backend.onrender.com/api"
+export default function AddIdea() {
 
-// Axios instance
-const api = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-})
+  const navigate = useNavigate()
 
-// Attach Basic Auth automatically
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("authToken")
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-    if (token) {
-      config.headers.Authorization = token
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    if (!title || !description) {
+      setError("All fields are required")
+      return
     }
 
-    return config
-  },
-  (error) => Promise.reject(error)
-)
+    try {
+      setLoading(true)
+      setError("")
 
-// Create Basic token
-export const makeBasicToken = (username, password) =>
-  "Basic " + btoa(`${username}:${password}`)
+      await ideaApi.create({
+        title: title,
+        description: description
+      })
 
-// ─── Ideas API ─────────────────────────────
-export const ideaApi = {
+      toast.success("Idea submitted successfully!")
 
-  getAll: (page = 0, size = 10, sort = "createdAt") =>
-    api.get(`/ideas?page=${page}&size=${size}&sort=${sort}`),
+      navigate("/")
 
-  getById: (id) =>
-    api.get(`/ideas/${id}`),
+    } catch (err) {
 
-  getByStatus: (status, page = 0, size = 10) =>
-    api.get(`/ideas/status/${status}?page=${page}&size=${size}`),
+      console.error("Submit error:", err)
 
-  search: (keyword, page = 0, size = 10) =>
-    api.get(`/ideas/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`),
+      const message =
+        err?.response?.data?.message ||
+        "Failed to submit idea"
 
-  getTop: (limit = 5) =>
-    api.get(`/ideas/top?limit=${limit}`),
+      setError(message)
 
-  create: (data) =>
-    api.post("/ideas", data),
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  update: (id, data) =>
-    api.put(`/ideas/${id}`, data),
+  return (
+    <div className="page">
+      <div className="container">
+        <div className="card form-card">
 
-  delete: (id) =>
-    api.delete(`/ideas/${id}`),
+          <h1 className="form-title">Submit an Idea</h1>
+          <p className="form-subtitle">
+            Share something you'd like to see built or improved
+          </p>
+
+          {error && <div className="alert alert-error">{error}</div>}
+
+          <form onSubmit={handleSubmit}>
+
+            <div className="form-group">
+              <label className="form-label">Title</label>
+
+              <input
+                className="form-input"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Idea title"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Description</label>
+
+              <textarea
+                className="form-input"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe your idea"
+                rows="5"
+              />
+            </div>
+
+            <button
+              className="btn btn-primary btn-lg"
+              disabled={loading}
+              style={{ width: "100%" }}
+            >
+              {loading ? "Submitting..." : "Submit Idea →"}
+            </button>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  )
 }
-
-// ─── Votes API ─────────────────────────────
-export const voteApi = {
-
-  upvote: (ideaId) =>
-    api.post(`/votes/ideas/${ideaId}/upvote`),
-
-  downvote: (ideaId) =>
-    api.post(`/votes/ideas/${ideaId}/downvote`),
-
-  getCounts: (ideaId) =>
-    api.get(`/votes/ideas/${ideaId}/counts`),
-
-  getMyVote: (ideaId) =>
-    api.get(`/votes/ideas/${ideaId}/my-vote`),
-}
-
-// ─── Users API ─────────────────────────────
-export const userApi = {
-
-  // Register
-  register: (username, email, password) =>
-    api.post("/users/register", {
-      username,
-      email,
-      password
-    }),
-
-  // Login
-  login: async (username, password) => {
-
-    const token = makeBasicToken(username, password)
-
-    // save token
-    localStorage.setItem("authToken", token)
-
-    const response = await api.get("/ideas?page=0&size=1")
-
-    return response.data
-  },
-
-  // Admin APIs
-  getAll: () =>
-    api.get("/users"),
-
-  deleteUser: (id) =>
-    api.delete(`/users/${id}`),
-}
-
-export default api
