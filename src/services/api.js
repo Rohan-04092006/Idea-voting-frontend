@@ -1,8 +1,8 @@
 import axios from "axios"
 
-const BASE_URL = "/api"
+const BASE_URL = "https://idea-voting-backend.onrender.com/api"
 
-// ─── Axios instance ─────────────────────────────────────────────
+// Axios instance
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
